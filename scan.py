@@ -4,17 +4,17 @@ import serial
 # import pyvisa as visa
 
 # --- Configuration ---
-PRINTER_PORT = "/dev/cu.usbserial-110"
+PRINTER_PORT = "/dev/cu.usbserial-10"
 PRINTER_BAUD = 115200
 
 # OSC_VISA_ADDR = "USB0::0x0699::0x0363::C102220::INSTR"  # replace with your scope's ID
 # OSC_CHANNEL = 1
 
 # Scan parameters (in mm)
-X_RANGE_MM = [10, 30]
-Y_RANGE_MM = [10, 30]
-Z_MM = 40
-STEP_MM = 3
+# X_RANGE_MM = [10, 30]
+Y_RANGE_MM = [50, 150]
+Z_MM = 180
+STEP_MM = 0.1
 
 # --- Initialize connections ---
 ser = serial.Serial(PRINTER_PORT, PRINTER_BAUD, timeout=1)
@@ -64,17 +64,28 @@ def main():
     # send_gcode("G28")
     # move_to(0, 10, 40)
     # time.sleep(2)
+    x = 12
 
-    results = []
-    for y in range(Y_RANGE_MM[0], Y_RANGE_MM[1] + 1, STEP_MM):
-        for x in range(X_RANGE_MM[0], X_RANGE_MM[1] + 1, STEP_MM):
-            move_to(x, y, Z_MM)
-            time.sleep(0.5)  # let vibrations settle
-            wf = read_waveform()
-            results.append({"x": x, "y": y, "waveform": wf})
-            print(f"Scanned ({x}, {y}), got {len(wf)} points")
+    for y in range(int(Y_RANGE_MM[0] / STEP_MM), int(Y_RANGE_MM[1] / STEP_MM) + 1):
+        y_pos = y * STEP_MM
+        # for x in range(X_RANGE_MM[0], X_RANGE_MM[1] + 1, STEP_MM):
+        move_to(x, y_pos, Z_MM)
+        time.sleep(0.01)  # let vibrations settle
+        # wf = read_waveform()
+        # results.append({"x": x, "y": y, "waveform": wf})
+        # print(f"Scanned ({x}, {y}), got {len(wf)} points")
     # # Optionally: save to file
-    # import json
+
+    # results = []
+    # for y in range(Y_RANGE_MM[0], Y_RANGE_MM[1] + 1, STEP_MM):
+    #     for x in range(X_RANGE_MM[0], X_RANGE_MM[1] + 1, STEP_MM):
+    #         move_to(x, y, Z_MM)
+    #         time.sleep(0.5)  # let vibrations settle
+    #         wf = read_waveform()
+    #         results.append({"x": x, "y": y, "waveform": wf})
+    #         print(f"Scanned ({x}, {y}), got {len(wf)} points")
+    # # # Optionally: save to file
+    # # import json
 
     # with open("scan_data.json", "w") as f:
     #     json.dump(results, f)
@@ -83,3 +94,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # move_to(0, 0, 200)
