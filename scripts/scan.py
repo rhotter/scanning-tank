@@ -7,9 +7,6 @@ import serial
 PRINTER_PORT = "/dev/cu.usbserial-10"
 PRINTER_BAUD = 115200
 
-# OSC_VISA_ADDR = "USB0::0x0699::0x0363::C102220::INSTR"  # replace with your scope's ID
-# OSC_CHANNEL = 1
-
 # Scan parameters (in mm)
 # X_RANGE_MM = [10, 30]
 Y_RANGE_MM = [50, 150]
@@ -46,22 +43,9 @@ def move_to(x, y, z):
     send_gcode(f"G1 X{x:.2f} Y{y:.2f} Z{z:.2f} F3000")
 
 
-def read_waveform():
-    return [0]
-    # # set acquisition to single-shot
-    # scope.write(":SINGLE")
-    # # wait for acquisition
-    # scope.query("*OPC?")
-    # # fetch data from channel
-    # data = scope.query_binary_values(
-    #     f":WAVEFORM:DATA? CHANNEL{OSC_CHANNEL}", datatype="f", container=list
-    # )
-    # return data
-
-
 def main():
     # home first
-    # send_gcode("G28")
+    send_gcode("G28")
     # move_to(0, 10, 40)
     # time.sleep(2)
     x = 12
