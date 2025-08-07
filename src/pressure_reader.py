@@ -7,6 +7,16 @@ class PressureReader:
 
     def __init__(self, kpa_per_mv: float = 6.31):
         self.hydrophone_kpa_per_mv = kpa_per_mv  # look up in your datasheet, might need to convert from dB re 1V/µPa
+        self.device = None
+
+    def __enter__(self):
+        self.device = dwf.Device()
+        self.device.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.device:
+            self.device.__exit__(exc_type, exc_val, exc_tb)
 
     def read_max_pressure(
         self,
@@ -43,22 +53,27 @@ class PressureReader:
         Returns:
             The pressure waveform in kPa.
         """
-        with dwf.Device() as device:
-            scope = device.analog_input
-
-            scope[0].setup(range=channel_range_v)
-            scope.setup_edge_trigger(
-                mode="normal",
-                channel=0,
-                slope="rising",
-                level=trigger_level_v,
-                hysteresis=trigger_hysteresis_v,
-                position=trigger_position_s,
+        if not self.device:
+            raise RuntimeError(
+                "Device not initialized. Use PressureReader as a context manager."
             )
-            recorder = scope.record(
-                sample_rate=sample_rate_hz, length=length_s, configure=True, start=True
-            )
-            channels = recorder.channels
 
-            return self.hydrophone_kpa_per_mv * 1e3 * channels[0].data_samples
+        scope = self.device.analog_input
+        scope[0].setup(range=channel_range_v)
+        scope.setup_edge_trigger(
+            mode="auto",
+            channel=0,
+            slope="rising",
+            level=trigger_level_v,
+            hysteresis=trigger_hysteresis_v,
+            position=trigger_position_s,
+        )
+        recorder = scope.record(
+            sample_rate=sample_rate_hz,
+            length=length_s,
+            configure=True,
+            start=True,
+        )
+        channels = recorder.channels
 
+        return self.hydrophone_kpa_per_mv * 1e3 * channels[0].data_samples

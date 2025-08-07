@@ -3,11 +3,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from src.pressure_reader import PressureReader
 from src.scanner import Scanner
+from tqdm import tqdm
+
+Y_MIN = -75
+X_MIN = 35
+X_MAX = 35
+Z_MIN = 150
 
 
 def scan_2d_plane(
-    x_range_mm: tuple[float, float] = (-5, 5),
-    y_range_mm: tuple[float, float] = (-55, -50),
+    x_range_mm: tuple[float, float] = (-7, 15),
+    y_range_mm: tuple[float, float] = (-70, -58),
     z_mm: float = 180,
     step_mm: float = 1.0,
     settle_time_s: float = 0.01,
@@ -32,20 +38,25 @@ def scan_2d_plane(
     # Initialize data array
     pressure_data = np.zeros((len(y_points), len(x_points)))
 
-    with Scanner() as scanner:
-        pressure_reader = PressureReader()
+    with Scanner() as scanner, PressureReader() as pressure_reader:
         # Home first
         print("Homing scanner...")
-        # scanner.home()
-        # time.sleep(2)
+        scanner.home()
+        time.sleep(2)
 
         print(f"Starting 2D scan: {len(x_points)} x {len(y_points)} points")
+        scanner.move_to(x_points[0], y_points[0], z_mm)
+        time.sleep(2)
 
-        for i, y in enumerate(y_points):
+        for i, y in tqdm(enumerate(y_points), desc="Scanning"):
             for j, x in enumerate(x_points):
                 # Move to position
                 scanner.move_to(x, y, z_mm)
                 time.sleep(settle_time_s)
+
+                if j == 0:
+                    time.sleep(0.3)  # delay for each row
+                    print("sleeping...")
 
                 # Read pressure
                 max_pressure = pressure_reader.read_max_pressure()
@@ -76,7 +87,6 @@ def display_scan_image(scan_data):
     plt.xlabel("X Position (mm)")
     plt.ylabel("Y Position (mm)")
     plt.title("2D Pressure Scan")
-    plt.grid(True, alpha=0.3)
 
     plt.tight_layout()
     plt.show()
@@ -85,10 +95,8 @@ def display_scan_image(scan_data):
 if __name__ == "__main__":
     # Run scan
     scan_data = scan_2d_plane(
-        x_range_mm=(-5, 5),
-        y_range_mm=(-55, -45),
-        step_mm=1.0,  # Larger step for faster scanning
-        settle_time_s=0.1,
+        step_mm=1,  # Larger step for faster scanning
+        settle_time_s=0.01,
     )
 
     # Display results
