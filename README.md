@@ -1,6 +1,8 @@
 # Hydrophone Scanning Tank
 
-I turned a 3D printer into a hydrophone scanning tank. This was ~100x cheaper than buying a hydrophone scanning tank.
+I turned a 3D printer into a hydrophone scanning tank. This was ~100x cheaper than buying a hydrophone scanning tank (>$50k).
+
+You can use [Pronterface](https://www.pronterface.com/) for moving the 3d printer.
 
 ![Tank image](image.png)
 
