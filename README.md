@@ -2,9 +2,28 @@
 
 I turned a 3D printer into a hydrophone scanning tank. This was ~100x cheaper than buying a hydrophone scanning tank (>$50k).
 
-You can use [Pronterface](https://www.pronterface.com/) for moving the 3d printer.
-
 ![Tank image](image.png)
+
+## Usage
+
+Start the backend:
+```bash
+uv run scanning-tank
+```
+
+Start the frontend (in a separate terminal):
+```bash
+cd frontend
+pnpm dev
+```
+
+Then open http://localhost:5173 in your browser.
+
+**Keyboard controls:**
+- `W/A/S/D` - Move X/Y axes
+- `Q/E` - Move Z axis
+- `H` - Home all axes
+- `Space` - Read pressure
 
 ## Materials
 

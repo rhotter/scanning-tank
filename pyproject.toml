@@ -1,21 +1,23 @@
 [project]
 name = "scanning-tank"
 version = "0.1.0"
-description = "Hydrophone scanning tank"
-requires-python = ">=3.8"
+description = "Hydrophone scanning tank webapp"
+requires-python = ">=3.10"
 dependencies = [
-    "pyvisa",
-    "pyusb",
+    "fastapi",
+    "uvicorn[standard]",
     "pyserial",
+    "websockets",
     "numpy>=1.24.4",
-    "matplotlib>=3.7.5",
     "dwfpy>=1.2.0",
-    "tqdm>=4.67.1",
 ]
+
+[project.scripts]
+scanning-tank = "scanning_tank.server:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
+packages = ["scanning_tank"]
