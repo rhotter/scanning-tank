@@ -17,7 +17,7 @@ class Scanner:
         self.port = port
         self.baud = baud
         self.ser = serial.Serial(port, baud, timeout=2)
-        time.sleep(0.5)  # Wait for printer to initialize
+        time.sleep(0.1)  # Wait for printer to initialize
         # Clear any buffered data
         self.ser.reset_input_buffer()
         # Ensure we're in absolute positioning mode and mm units

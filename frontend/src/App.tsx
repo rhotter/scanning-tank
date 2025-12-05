@@ -20,6 +20,7 @@ function App() {
   const [pressure, setPressure] = useState<number | null>(null)
   const [stepSize, setStepSize] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set())
   const wsRef = useRef<WebSocket | null>(null)
 
   const showError = (msg: string) => {
@@ -136,6 +137,9 @@ function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT') return
 
+      const key = e.key.toLowerCase()
+      setPressedKeys(prev => new Set(prev).add(key))
+
       if (e.key === 'h' || e.key === 'H') {
         home()
         return
@@ -152,8 +156,21 @@ function App() {
       }
     }
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase()
+      setPressedKeys(prev => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
+
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
   }, [move])
 
   return (
@@ -254,120 +271,105 @@ function App() {
           </div>
         </section>
 
-        {/* Position */}
-        <section className="mb-8">
-          <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">Position</h2>
-
-          <div className="grid grid-cols-3 gap-3">
-            <div className="p-4 rounded-lg border border-neutral-800 bg-neutral-900/50 text-center">
-              <div className="text-xs text-neutral-500 mb-1">X</div>
-              <div className="text-2xl font-light tabular-nums">{position.x.toFixed(2)}</div>
-              <div className="text-xs text-neutral-600">mm</div>
-            </div>
-            <div className="p-4 rounded-lg border border-neutral-800 bg-neutral-900/50 text-center">
-              <div className="text-xs text-neutral-500 mb-1">Y</div>
-              <div className="text-2xl font-light tabular-nums">{position.y.toFixed(2)}</div>
-              <div className="text-xs text-neutral-600">mm</div>
-            </div>
-            <div className="p-4 rounded-lg border border-neutral-800 bg-neutral-900/50 text-center">
-              <div className="text-xs text-neutral-500 mb-1">Z</div>
-              <div className="text-2xl font-light tabular-nums">{position.z.toFixed(2)}</div>
-              <div className="text-xs text-neutral-600">mm</div>
-            </div>
-          </div>
-        </section>
-
         {/* Controls */}
         <section className="mb-8">
           <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">Controls</h2>
 
-          <div className="p-6 rounded-lg border border-neutral-800 bg-neutral-900/50">
-            <div className="flex flex-col items-center gap-2">
-              {/* Y- */}
-              <button
-                onClick={() => move('forward')}
-                className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
-              >
-                Y-
-              </button>
-
-              {/* X- Home X+ */}
-              <div className="flex gap-2">
+          <div className="p-6 rounded-lg border border-neutral-800 bg-neutral-900/50 relative">
+            <div className="flex gap-8 justify-center">
+              {/* XY Controls */}
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs text-neutral-600 mb-2">X / Y</span>
                 <button
-                  onClick={() => move('left')}
-                  className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
+                  onClick={() => move('forward')}
+                  className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                    pressedKeys.has('w')
+                      ? 'bg-white border-white text-black'
+                      : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                  }`}
                 >
-                  X-
+                  <span className="text-lg">W</span>
                 </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => move('left')}
+                    className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                      pressedKeys.has('a')
+                        ? 'bg-white border-white text-black'
+                        : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-lg">A</span>
+                  </button>
+                  <button
+                    onClick={home}
+                    className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                      pressedKeys.has('h')
+                        ? 'bg-white border-white text-black'
+                        : 'border-neutral-600 bg-neutral-700/50 hover:bg-neutral-600 text-neutral-400'
+                    }`}
+                  >
+                    <span className="text-xs">H</span>
+                  </button>
+                  <button
+                    onClick={() => move('right')}
+                    className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                      pressedKeys.has('d')
+                        ? 'bg-white border-white text-black'
+                        : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-lg">D</span>
+                  </button>
+                </div>
                 <button
-                  onClick={home}
-                  className="w-12 h-12 rounded-lg border border-neutral-600 bg-neutral-700 hover:bg-neutral-600 transition-all flex items-center justify-center text-xs font-medium"
+                  onClick={() => move('backward')}
+                  className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                    pressedKeys.has('s')
+                      ? 'bg-white border-white text-black'
+                      : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                  }`}
                 >
-                  HOME
-                </button>
-                <button
-                  onClick={() => move('right')}
-                  className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
-                >
-                  X+
+                  <span className="text-lg">S</span>
                 </button>
               </div>
 
-              {/* Y+ */}
-              <button
-                onClick={() => move('backward')}
-                className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
-              >
-                Y+
-              </button>
-
-              {/* Z controls */}
-              <div className="flex gap-2 mt-4 pt-4 border-t border-neutral-800">
+              {/* Z Controls */}
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-xs text-neutral-600 mb-2">Z</span>
                 <button
                   onClick={() => move('up')}
-                  className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
+                  className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                    pressedKeys.has('e')
+                      ? 'bg-white border-white text-black'
+                      : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                  }`}
                 >
-                  Z+
+                  <span className="text-lg">E</span>
                 </button>
                 <button
                   onClick={() => move('down')}
-                  className="w-12 h-12 rounded-lg border border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-600 transition-all flex items-center justify-center text-sm font-medium"
+                  className={`w-11 h-11 rounded-md border transition-all flex items-center justify-center ${
+                    pressedKeys.has('q')
+                      ? 'bg-white border-white text-black'
+                      : 'border-neutral-700 bg-neutral-800 hover:bg-neutral-700 hover:border-neutral-500 text-neutral-400 hover:text-white'
+                  }`}
                 >
-                  Z-
+                  <span className="text-lg">Q</span>
                 </button>
               </div>
+
             </div>
 
-            {/* Step size */}
-            <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-neutral-800">
-              <span className="text-xs text-neutral-500">Step</span>
-              <input
-                type="number"
-                value={stepSize}
-                onChange={(e) => setStepSize(parseFloat(e.target.value) || 1)}
-                min="0.1"
-                max="50"
-                step="0.1"
-                className="w-20 bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-sm text-center focus:outline-none focus:border-neutral-600"
-              />
-              <span className="text-xs text-neutral-500">mm</span>
-            </div>
-
-            {/* Keyboard hints */}
-            <div className="text-center text-neutral-600 text-xs mt-6">
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono">W</kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono ml-1">A</kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono ml-1">S</kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono ml-1">D</kbd>
-              <span className="mx-2">X/Y</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono">Q</kbd>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono ml-1">E</kbd>
-              <span className="mx-2">Z</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono">H</kbd>
-              <span className="mx-2">Home</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-neutral-800 border border-neutral-700 font-mono">Space</kbd>
-              <span className="ml-2">Pressure</span>
-            </div>
+            {/* Step size dropdown */}
+            <select
+              value={stepSize}
+              onChange={(e) => setStepSize(parseFloat(e.target.value))}
+              className="absolute bottom-4 right-4 bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-neutral-500 cursor-pointer"
+            >
+              <option value={1}>Coarse (1 mm)</option>
+              <option value={0.1}>Fine (0.1 mm)</option>
+            </select>
           </div>
         </section>
 
