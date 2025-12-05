@@ -108,7 +108,7 @@ async def move(x: float, y: float, z: float):
         return {"status": "error", "message": "Printer not connected"}
     try:
         scanner.move_to(x, y, z)
-        current_position = {"x": x, "y": y, "z": z}
+        current_position = scanner.get_position()
         return {"status": "ok", "position": current_position}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -125,7 +125,7 @@ async def move_relative(dx: float = 0, dy: float = 0, dz: float = 0):
         new_y = current_position["y"] + dy
         new_z = current_position["z"] + dz
         scanner.move_to(new_x, new_y, new_z)
-        current_position = {"x": new_x, "y": new_y, "z": new_z}
+        current_position = scanner.get_position()
         return {"status": "ok", "position": current_position}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -195,9 +195,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         new_y = current_position["y"] + move_params.get("dy", 0)
                         new_z = current_position["z"] + move_params.get("dz", 0)
                         scanner.move_to(new_x, new_y, new_z)
-                        current_position["x"] = new_x
-                        current_position["y"] = new_y
-                        current_position["z"] = new_z
+                        current_position.update(scanner.get_position())
                         await websocket.send_json({
                             "type": "position",
                             "position": current_position
