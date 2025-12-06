@@ -100,6 +100,16 @@ async def get_position():
     return current_position
 
 
+@app.get("/api/status")
+async def get_status():
+    """Get connection status."""
+    return {
+        "printer_connected": scanner is not None,
+        "ad3_connected": pressure_reader is not None,
+        "position": current_position,
+    }
+
+
 @app.post("/api/move")
 async def move(x: float, y: float, z: float):
     """Move to absolute position."""

@@ -68,12 +68,18 @@ class PressureReader:
             hysteresis=trigger_hysteresis_v,
             position=trigger_position_s,
         )
-        recorder = scope.record(
+
+        # Number of samples for the requested time window
+        buffer_size = max(1, int(round(sample_rate_hz * length_s)))
+
+        scope.single(
             sample_rate=sample_rate_hz,
-            length=length_s,
+            buffer_size=buffer_size,
             configure=True,
             start=True,
         )
-        channels = recorder.channels
 
-        return self.hydrophone_kpa_per_mv * 1e3 * channels[0].data_samples
+        waveform_volts = scope[0].get_data()
+
+        # Convert V -> mV -> kPa
+        return self.hydrophone_kpa_per_mv * 1e3 * waveform_volts

@@ -4,7 +4,7 @@ import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
 
 function Water({ width, depth, height }: { width: number; depth: number; height: number }) {
-  const waterLevel = 0.8 // 80% full
+  const waterLevel = 0.65 // 65% full
   const waterHeight = height * waterLevel
   const waterY = -height / 2 + waterHeight / 2
   const surfaceY = waterY + waterHeight / 2
@@ -27,9 +27,9 @@ function Water({ width, depth, height }: { width: number; depth: number; height:
 
 // Scanner bounds (x=0,y=0 centered, z up)
 const BOUNDS = {
-  x: { min: -35, max: 35 },
-  y: { min: -40, max: 40 },
-  z: { min: 150, max: 220 },
+  x: { min: -42, max: 42 },
+  y: { min: -70, max: 70 },   // longer
+  z: { min: 100, max: 237 },  // deeper
 }
 
 function PositionViewer({ position }: { position: { x: number; y: number; z: number } }) {
@@ -84,13 +84,13 @@ function PositionViewer({ position }: { position: { x: number; y: number; z: num
       {/* Needle hydrophone */}
       <group position={[normPos.x, normPos.y, normPos.z]}>
         {/* Gold tip (cylinder) - top at measurement position */}
-        <mesh position={[0, -3, 0]}>
-          <cylinderGeometry args={[0.5, 0.5, 6, 16]} />
+        <mesh position={[0, -5, 0]}>
+          <cylinderGeometry args={[1, 1, 10, 16]} />
           <meshBasicMaterial color="#B8860B" />
         </mesh>
         {/* Needle body (gray cylinder) */}
-        <mesh position={[0, -11, 0]}>
-          <cylinderGeometry args={[0.5, 0.5, 10, 16]} />
+        <mesh position={[0, -18, 0]}>
+          <cylinderGeometry args={[1, 1, 16, 16]} />
           <meshBasicMaterial color="#808080" />
         </mesh>
       </group>
@@ -137,6 +137,20 @@ function App() {
     }
   }
 
+  const checkStatus = async () => {
+    try {
+      const res = await fetch('/api/status')
+      const data = await res.json()
+      setPrinterConnected(data.printer_connected)
+      setAd3Connected(data.ad3_connected)
+      if (data.position) {
+        setPosition(data.position)
+      }
+    } catch {
+      // Server not available yet
+    }
+  }
+
   const connectWebSocket = useCallback(() => {
     const ws = new WebSocket(`ws://${window.location.host}/ws`)
 
@@ -160,9 +174,21 @@ function App() {
 
   useEffect(() => {
     refreshPorts()
+    checkStatus()
     connectWebSocket()
     return () => wsRef.current?.close()
   }, [connectWebSocket])
+
+  // Continuous pressure reading when AD3 is connected
+  useEffect(() => {
+    if (!ad3Connected) return
+    const interval = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'read_pressure' }))
+      }
+    }, 100) // Read every 100ms
+    return () => clearInterval(interval)
+  }, [ad3Connected])
 
   const togglePrinter = async () => {
     if (printerConnected) {
@@ -276,7 +302,7 @@ function App() {
     <div className="h-screen w-screen bg-black text-white antialiased overflow-hidden">
       {/* Full-screen 3D Position Viewer */}
       <div className="absolute inset-0">
-        <Canvas camera={{ position: [0, 60, 120], fov: 50 }}>
+        <Canvas camera={{ position: [0, 80, 180], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <PositionViewer position={position} />
           <OrbitControls enablePan={false} />
